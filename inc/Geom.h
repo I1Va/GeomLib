@@ -21,10 +21,15 @@
 
 
 
+
+template<std::floating_point T, std::size_t N>
+struct GmPoint;
 template<std::floating_point T, std::size_t N>
 class GmVec;
 
-// ------------------------------------ 3D specialization -------------------------------------
+
+
+// ------------------------------------ 3D specialization ------------------------------------
 template<std::floating_point T>
 class GmVec<T,3> {
     T x_{}, y_{}, z_{};
@@ -40,9 +45,7 @@ public:
         : x_(static_cast<T>(other.x())), y_(static_cast<T>(other.y())), z_(static_cast<T>(other.z())),
           len2Cache_(), len2Dirty_(true) {}
 
-    ~GmVec() = default;
-
-// --------------------------------------- operators ------------------------------------------
+    // ------------------------------------ Operators ------------------------------------
     constexpr GmVec<T, 3> operator+(const GmVec<T, 3> &other) const noexcept {
         GM_ASSERT_VEC3(*this);
         GM_ASSERT_VEC3(other);
@@ -129,7 +132,7 @@ public:
     
         return !(*this == other);
     }
-// --------------------------------------- math -----------------------------------------------
+    // --------------------------------------- Math -----------------------------------------------
     [[nodiscard]] constexpr GmVec<T, 3> clamped(const T min, const T max) const noexcept {
         GM_ASSERT_VEC3(*this);
 
@@ -148,7 +151,7 @@ public:
         return len > T(0) ? *this / len : GmVec<T, 3>();
     }
 
-// --------------------------------------- getters --------------------------------------------
+    // --------------------------------------- Getters --------------------------------------------
     [[nodiscard]] constexpr T x() const noexcept { return x_; }
     [[nodiscard]] constexpr T y() const noexcept { return y_; }
     [[nodiscard]] constexpr T z() const noexcept { return z_; }
@@ -163,7 +166,7 @@ public:
         return len2Cache_;
     }
 
-// --------------------------------------- setters --------------------------------------------
+    // --------------------------------------- Setters --------------------------------------------
     void setX(const T scalar) noexcept
     {
         x_ = scalar;
@@ -179,9 +182,26 @@ public:
         z_ = scalar;
         len2Dirty_ = true;
     }
+
+    // ---------------- Stream operators ----------------------------------------------------------
+    friend std::ostream& operator<<(std::ostream& os, const GmVec<T,3>& v) {
+        return os << "vec3{" << v.x_ << ", " << v.y_ << ", " << v.z_ << "}";
+    }
+
+    friend std::istream& operator>>(std::istream& is, GmVec<T,3>& v) {
+        T x, y, z;
+        is >> x >> y >> z;
+        if (is) {
+            v.x_ = x; 
+            v.y_ = y;
+            v.z_ = z;
+            v.len2Dirty_ = true;
+        }
+        return is;
+    }
 };
 
-// --------------------- free functions -------------------------------------------------------
+// --------------------- Free functions -------------------------------------------------------
 template<std::floating_point T>
 [[nodiscard]] constexpr T dot(const GmVec<T,3> &a, const GmVec<T,3> &b) noexcept {
     GM_ASSERT_VEC3(a);
@@ -213,21 +233,59 @@ template<std::floating_point T>
     };
 }
 
-// ---------------- stream operators ----------------------------------------------------------
-template<std::floating_point T>
-std::ostream& operator<<(std::ostream& os, const GmVec<T,3>& v) {
-    return os << "vec3{" << v.x() << ", " << v.y() << ", " << v.z() << "}";
-}
 
 template<std::floating_point T>
-std::istream& operator>>(std::istream& is, GmVec<T,3>& v) {
-    T x, y, z;
-    is >> x >> y >> z;
-    if (is) {
-        v.setX(x); v.setY(y); v.setZ(z);
+struct GmPoint<T, 3> {
+    T x{}, y{}, z{};
+
+    constexpr GmPoint() noexcept = default;
+    constexpr GmPoint(T x_, T y_, T z_) noexcept : x(x_), y(y_), z(z_) {}
+    constexpr explicit GmPoint(T val) noexcept : x(val), y(val), z(val) {}
+    template<std::floating_point U>
+    constexpr GmPoint(const GmPoint<U,3>& other) noexcept
+        : x(static_cast<T>(other.x)), y(static_cast<T>(other.y)), z(static_cast<T>(other.z)) {}
+
+
+    // ------------------------------- Point–Point operators ----------------------------------
+    [[nodiscard]] constexpr GmVec<T, 3> operator-(const GmPoint<T, 3> &other) const noexcept {
+        return GmVec<T, 3>(x - other.x, y - other.y, z - other.z);
     }
-    return is;
-}
+    [[nodiscard]] constexpr GmPoint<T, 3> operator+(const GmPoint<T, 3> &other) const noexcept {
+        return {x + other.x, y + other.y, z + other.z};
+    }
+    [[nodiscard]] constexpr GmPoint<T, 3> operator*(const GmPoint<T, 3> &other) const noexcept {
+        return {x * other.x, y * other.y, z * other.z};
+    }
+    [[nodiscard]] constexpr GmPoint<T, 3> operator/(const GmPoint<T, 3> &other) const noexcept {
+        GM_ASSERT(other.x != 0 && other.y != 0 && other.z != 0);
+        return {x / other.x, y / other.y, z / other.z};
+    }
+
+    // ------------------------------- Point–Scalar operators ---------------------------------
+    [[nodiscard]] constexpr GmPoint<T, 3> operator*(T scalar) const noexcept {
+        return {x * scalar, y * scalar, z * scalar};
+    }
+    [[nodiscard]] constexpr GmPoint<T, 3> operator/(T scalar) const noexcept {
+        GM_ASSERT(scalar != 0);
+        return {x / scalar, y / scalar, z / scalar};
+    }
+
+    // --------------------------------------- Comparison -------------------------------------
+    [[nodiscard]] constexpr bool operator==(const GmPoint<T, 3> &other) const noexcept {
+        return x == other.x && y == other.y && z == other.z;
+    }
+    [[nodiscard]] constexpr bool operator!=(const GmPoint<T, 3> &other) const noexcept {
+        return !(*this == other);
+    }
+
+    // ---------------- Stream operators ------------------------------------------------------
+    friend std::ostream& operator<<(std::ostream& os, const GmPoint<T, 3> &p) {
+        return os << "point3{" << p.x << ", " << p.y << ", " << p.z << "}";
+    }
+    friend std::istream& operator>>(std::istream& is, GmPoint<T, 3> &p) {
+        return is >> p.x >> p.y >> p.z;
+    }
+};
 
 
 #endif // GEOM_H
