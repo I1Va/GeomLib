@@ -7,7 +7,6 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 add_library(GeomLib STATIC
     ${CMAKE_CURRENT_SOURCE_DIR}/src/Geom.cpp
-    main.cpp
 )
 
 target_include_directories(GeomLib
