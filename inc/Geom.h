@@ -8,6 +8,7 @@
 #include <algorithm>
 #include <ostream>
 #include <istream>
+#include <random>
 
 #ifdef GM_DEBUG
     #define GM_ASSERT_VEC3(v) assert( (v).isFinite() )
@@ -20,13 +21,25 @@
 #endif
 
 
+inline double degrees_to_radians(double degrees) {
+    return degrees * M_PI / 180.0;
+}
+
+inline double randomDouble() {
+    static std::uniform_real_distribution<double> distribution(0.0, 1.0);
+    static std::mt19937 generator;
+    return distribution(generator);
+}
+
+inline double randomDouble(double min, double max) {
+    return min + (max-min)*randomDouble();
+}
 
 
 template<std::floating_point T, std::size_t N>
 struct GmPoint;
 template<std::floating_point T, std::size_t N>
 class GmVec;
-
 
 
 // ------------------------------------ 3D specialization ------------------------------------
@@ -143,27 +156,42 @@ public:
             std::clamp(z_, min, max)
         );
     }
-    [[nodiscard]] constexpr bool isFinite() const noexcept {
+
+    constexpr bool isFinite() const noexcept {
         return std::isfinite(x_) && std::isfinite(y_) && std::isfinite(z_);
     }
+
+    inline bool nearZero() const {
+        const T eps = std::numeric_limits<T>::epsilon();
+        return (fabs(x()) < eps) && (fabs(y()) < eps) && (fabs(z()) < eps);
+    }
+
     [[nodiscard]] constexpr GmVec<T, 3> normalized() const noexcept {
         T len = length();
         return len > T(0) ? *this / len : GmVec<T, 3>();
     }
 
     // --------------------------------------- Getters --------------------------------------------
-    [[nodiscard]] constexpr T x() const noexcept { return x_; }
-    [[nodiscard]] constexpr T y() const noexcept { return y_; }
-    [[nodiscard]] constexpr T z() const noexcept { return z_; }
+    constexpr T x() const noexcept { return x_; }
+    constexpr T y() const noexcept { return y_; }
+    constexpr T z() const noexcept { return z_; }
 
-    [[nodiscard]] constexpr T length() const noexcept { return std::sqrt(length2()); }
-    [[nodiscard]] constexpr T length2() const noexcept 
+    constexpr T length() const noexcept { return std::sqrt(length2()); }
+    constexpr T length2() const noexcept 
     {
         if (len2Dirty_) {
             len2Cache_ = x_*x_ + y_*y_ + z_*z_;
             len2Dirty_ = false;
         }
         return len2Cache_;
+    }
+
+    static GmVec<double, 3> random() {
+        return GmVec<double, 3>(randomDouble(), randomDouble(), randomDouble());
+    }
+
+    static GmVec<double, 3> random(double min, double max) {
+        return GmVec<double, 3>(randomDouble(min,max), randomDouble(min,max), randomDouble(min,max));
     }
 
     // --------------------------------------- Setters --------------------------------------------
@@ -203,14 +231,14 @@ public:
 
 // --------------------- Free functions -------------------------------------------------------
 template<std::floating_point T>
-[[nodiscard]] constexpr T dot(const GmVec<T,3> &a, const GmVec<T,3> &b) noexcept {
+constexpr T dot(const GmVec<T,3> &a, const GmVec<T,3> &b) noexcept {
     GM_ASSERT_VEC3(a);
     GM_ASSERT_VEC3(b);
     return a.x() * b.x() + a.y() * b.y() + a.z() * b.z();
 }
 
 template<std::floating_point T>
-[[nodiscard]] constexpr GmVec<T,3> cross(const GmVec<T,3> &a, const GmVec<T,3> &b) noexcept {
+constexpr GmVec<T,3> cross(const GmVec<T,3> &a, const GmVec<T,3> &b) noexcept {
     GM_ASSERT_VEC3(a);
     GM_ASSERT_VEC3(b);
     return GmVec<T,3>{
@@ -221,7 +249,7 @@ template<std::floating_point T>
 }
 
 template<std::floating_point T>
-[[nodiscard]] GmVec<T,3> cordPow(const GmVec<T,3> &base, const GmVec<T,3> &exp) {
+GmVec<T,3> cordPow(const GmVec<T,3> &base, const GmVec<T,3> &exp) {
     GM_ASSERT_VEC3(base);
     GM_ASSERT_VEC3(exp);
     GM_ASSERT(base.x() >= T(0) && base.y() >= T(0) && base.z() >= T(0));
@@ -247,34 +275,40 @@ struct GmPoint<T, 3> {
 
 
     // ------------------------------- Point–Point operators ----------------------------------
-    [[nodiscard]] constexpr GmVec<T, 3> operator-(const GmPoint<T, 3> &other) const noexcept {
+    // Point - Point = Vector
+    constexpr GmVec<T, 3> operator-(const GmPoint<T, 3> &other) const noexcept {
         return GmVec<T, 3>(x - other.x, y - other.y, z - other.z);
     }
-    [[nodiscard]] constexpr GmPoint<T, 3> operator+(const GmPoint<T, 3> &other) const noexcept {
-        return {x + other.x, y + other.y, z + other.z};
+
+    // Point + Vector = Point
+    constexpr GmPoint<T, 3> operator+(const GmVec<T, 3> &vec) const noexcept {
+        return GmPoint<T, 3>(x + vec.x(), y + vec.y(), z + vec.z());
     }
-    [[nodiscard]] constexpr GmPoint<T, 3> operator*(const GmPoint<T, 3> &other) const noexcept {
-        return {x * other.x, y * other.y, z * other.z};
+
+    // Point - Vector = Point
+    constexpr GmPoint<T, 3> operator-(const GmVec<T, 3> &vec) const noexcept {
+        return GmPoint<T, 3>(x - vec.x(), y - vec.y(), z - vec.z());
     }
-    [[nodiscard]] constexpr GmPoint<T, 3> operator/(const GmPoint<T, 3> &other) const noexcept {
-        GM_ASSERT(other.x != 0 && other.y != 0 && other.z != 0);
-        return {x / other.x, y / other.y, z / other.z};
+
+    // ------------------------------- Convertations ------------------------------------------
+    constexpr GmVec<T, 3> toVec3() const noexcept {
+        return GmVec<T, 3>(x, y, z);
     }
 
     // ------------------------------- Point–Scalar operators ---------------------------------
-    [[nodiscard]] constexpr GmPoint<T, 3> operator*(T scalar) const noexcept {
+    constexpr GmPoint<T, 3> operator*(T scalar) const noexcept {
         return {x * scalar, y * scalar, z * scalar};
     }
-    [[nodiscard]] constexpr GmPoint<T, 3> operator/(T scalar) const noexcept {
+    constexpr GmPoint<T, 3> operator/(T scalar) const noexcept {
         GM_ASSERT(scalar != 0);
         return {x / scalar, y / scalar, z / scalar};
     }
 
     // --------------------------------------- Comparison -------------------------------------
-    [[nodiscard]] constexpr bool operator==(const GmPoint<T, 3> &other) const noexcept {
+    constexpr bool operator==(const GmPoint<T, 3> &other) const noexcept {
         return x == other.x && y == other.y && z == other.z;
     }
-    [[nodiscard]] constexpr bool operator!=(const GmPoint<T, 3> &other) const noexcept {
+    constexpr bool operator!=(const GmPoint<T, 3> &other) const noexcept {
         return !(*this == other);
     }
 
