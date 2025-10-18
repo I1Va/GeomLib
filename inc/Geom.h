@@ -230,6 +230,14 @@ public:
 };
 
 // --------------------- Free functions -------------------------------------------------------
+
+template<std::floating_point T>
+inline GmVec<T, 3> getOrtogonal(const GmVec<T, 3> a, const GmVec<T, 3> b) {
+    double bLen2 = b.length2();
+    double c = dot(a, b) / bLen2;
+    return a - b * c;
+}
+
 template<std::floating_point T>
 constexpr T dot(const GmVec<T,3> &a, const GmVec<T,3> &b) noexcept {
     GM_ASSERT_VEC3(a);
