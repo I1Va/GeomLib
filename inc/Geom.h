@@ -157,7 +157,7 @@ public:
         );
     }
 
-    void rotate(const GmVec<T, 3> &axis, const double radians) {
+    void setAngle(const GmVec<T, 3> &axis, const double radians) {
         GmVec<T, 3> k = axis.normalized();
         T ux = k.x(), uy = k.y(), uz = k.z();
 
@@ -169,6 +169,24 @@ public:
         (*this).x_ = x_ * (c + ux*ux*oneC)     + y_ * (ux*uy*oneC - uz*s)  + z_ * (ux*uz*oneC + uy*s);
         (*this).y_ = x_ * (uy*ux*oneC + uz*s)  + y_ * (c + uy*uy*oneC)     + z_ * (uy*uz*oneC - ux*s);
         (*this).z_ = x_ * (uz*ux*oneC - uy*s)  + y_ * (uz*uy*oneC + ux*s)  + z_ * (c + uz*uz*oneC);
+    }
+
+    void rotate(const GmVec<T, 3> &axis, const double deltaRadians) {
+        GmVec<T,3> k = axis.normalized();
+
+        T ux = k.x(), uy = k.y(), uz = k.z();
+        T c = std::cos(deltaRadians);
+        T s = std::sin(deltaRadians);
+        T oneC = 1 - c;
+
+        const T x = x_;
+        const T y = y_;
+        const T z = z_;
+
+        // Rodrigues’ inremental rotation formula
+        x_ = x * (c + ux*ux*oneC)     + y * (ux*uy*oneC - uz*s)  + z * (ux*uz*oneC + uy*s);
+        y_ = x * (uy*ux*oneC + uz*s)  + y * (c + uy*uy*oneC)     + z * (uy*uz*oneC - ux*s);
+        z_ = x * (uz*ux*oneC - uy*s)  + y * (uz*uy*oneC + ux*s)  + z * (c + uz*uz*oneC);
     }
 
     constexpr bool isFinite() const noexcept {
