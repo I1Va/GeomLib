@@ -157,6 +157,20 @@ public:
         );
     }
 
+    void rotate(const GmVec<T, 3> &axis, const double radians) {
+        GmVec<T, 3> k = axis.normalized();
+        T ux = k.x(), uy = k.y(), uz = k.z();
+
+        T c = std::cos(radians);
+        T s = std::sin(radians);
+        T oneC = 1 - c;
+
+        // Rodrigues’ rotation formula
+        (*this).x_ = x_ * (c + ux*ux*oneC)     + y_ * (ux*uy*oneC - uz*s)  + z_ * (ux*uz*oneC + uy*s);
+        (*this).y_ = x_ * (uy*ux*oneC + uz*s)  + y_ * (c + uy*uy*oneC)     + z_ * (uy*uz*oneC - ux*s);
+        (*this).z_ = x_ * (uz*ux*oneC - uy*s)  + y_ * (uz*uy*oneC + ux*s)  + z_ * (c + uz*uz*oneC);
+    }
+
     constexpr bool isFinite() const noexcept {
         return std::isfinite(x_) && std::isfinite(y_) && std::isfinite(z_);
     }
@@ -228,6 +242,195 @@ public:
         return is;
     }
 };
+
+
+// ------------------------------------ 2D specialization ------------------------------------
+template<std::floating_point T>
+class GmVec<T,2> {
+    T x_{}, y_{};
+    mutable T len2Cache_;
+    mutable bool len2Dirty_;
+
+public:
+    constexpr GmVec() noexcept : x_(), y_(), len2Cache_(), len2Dirty_(true) {}
+    constexpr GmVec(T x_, T y_) noexcept : x_(x_), y_(y_), len2Cache_(), len2Dirty_(true) {}
+    constexpr explicit GmVec(T val) noexcept : x_(val), y_(val), len2Cache_(), len2Dirty_(true) {}
+    template<std::floating_point U>
+    constexpr GmVec(const GmVec<U,2>& other) noexcept
+        : x_(static_cast<T>(other.x())), y_(static_cast<T>(other.y())),
+          len2Cache_(), len2Dirty_(true) {}
+
+    // ------------------------------------ Operators ------------------------------------
+    constexpr GmVec<T, 2> operator+(const GmVec<T, 2> &other) const noexcept {
+        GM_ASSERT_VEC2(*this);
+        GM_ASSERT_VEC2(other);
+
+        return GmVec<T, 2>(x_ + other.x(), y_ + other.y());
+    }
+    constexpr GmVec<T, 2> operator-(const GmVec<T, 2> &other) const noexcept {
+        GM_ASSERT_VEC2(*this);
+        GM_ASSERT_VEC2(other);
+
+        return GmVec<T, 2>(x_ - other.x(), y_ - other.y());
+    }
+    constexpr GmVec<T, 2> operator*(const GmVec<T, 2> &other) const noexcept {
+        GM_ASSERT_VEC2(*this);
+        GM_ASSERT_VEC2(other);
+
+        return GmVec<T, 2>(x_ * other.x(), y_ * other.y());
+    }
+    constexpr GmVec<T, 2> operator*(const T scalar) const noexcept {
+        GM_ASSERT_VEC2(*this);
+
+        return GmVec<T, 2>(x_ * scalar, y_ * scalar);
+    }
+    constexpr GmVec<T, 2> operator/(const T scalar) const {
+        GM_ASSERT_VEC2(*this);
+        GM_ASSERT(scalar != 0);
+
+        return GmVec<T, 2>(x_ / scalar, y_ / scalar);
+    }
+    constexpr GmVec<T, 2> operator+=(const GmVec<T, 2> &other) noexcept {
+        GM_ASSERT_VEC2(*this);
+        GM_ASSERT_VEC2(other);
+
+        x_ += other.x();
+        y_ += other.y();
+        len2Dirty_ = true;
+
+        return *this;
+    }
+    constexpr GmVec<T, 2> operator-=(const GmVec<T, 2> &other) noexcept {
+        GM_ASSERT_VEC2(*this);
+        GM_ASSERT_VEC2(other);
+
+        x_ -= other.x();
+        y_ -= other.y();
+        len2Dirty_ = true;
+
+        return *this;
+    }
+    constexpr GmVec<T, 2> operator*=(const GmVec<T, 2> &other) noexcept {
+        GM_ASSERT_VEC2(*this);
+        GM_ASSERT_VEC2(other);
+
+        x_ *= other.x();
+        y_ *= other.y();
+        len2Dirty_ = true;
+
+        return *this;
+    }
+    constexpr GmVec<T, 2> operator/=(const T scalar) noexcept {
+        GM_ASSERT_VEC2(*this);
+        GM_ASSERT(scalar != 0);
+
+        x_ /= scalar;
+        y_ /= scalar;
+        len2Dirty_ = true;
+
+        return *this;
+    }
+    GmVec<T, 2> &operator=(const GmVec<T, 2> &other) noexcept = default;
+    constexpr bool operator==(const GmVec<T, 2> &other) const noexcept {
+        GM_ASSERT_VEC2(*this);
+        GM_ASSERT_VEC2(other);
+
+        return x_ == other.x() && y_ == other.y();
+    }
+    constexpr bool operator!=(const GmVec<T, 2> &other) const noexcept {
+        GM_ASSERT_VEC2(*this);
+        GM_ASSERT_VEC2(other);
+
+        return !(*this == other);
+    }
+
+    // --------------------------------------- Math -----------------------------------------------
+    [[nodiscard]] constexpr GmVec<T, 2> clamped(const T min, const T max) const noexcept {
+        GM_ASSERT_VEC2(*this);
+
+        return GmVec<T, 2>
+        (
+            std::clamp(x_, min, max),
+            std::clamp(y_, min, max)
+        );
+    }
+
+    // Rotate in-plane by radians (counter-clockwise)
+    void rotate(const double radians) {
+        T c = std::cos(radians);
+        T s = std::sin(radians);
+        T nx = x_ * c - y_ * s;
+        T ny = x_ * s + y_ * c;
+        x_ = nx;
+        y_ = ny;
+        len2Dirty_ = true;
+    }
+
+    constexpr bool isFinite() const noexcept {
+        return std::isfinite(x_) && std::isfinite(y_);
+    }
+
+    inline bool nearZero() const {
+        const T eps = std::numeric_limits<T>::epsilon();
+        return (fabs(x()) < eps) && (fabs(y()) < eps);
+    }
+
+    [[nodiscard]] constexpr GmVec<T, 2> normalized() const noexcept {
+        T len = length();
+        return len > T(0) ? *this / len : GmVec<T, 2>();
+    }
+
+    // --------------------------------------- Getters --------------------------------------------
+    constexpr T x() const noexcept { return x_; }
+    constexpr T y() const noexcept { return y_; }
+
+    constexpr T length() const noexcept { return std::sqrt(length2()); }
+    constexpr T length2() const noexcept 
+    {
+        if (len2Dirty_) {
+            len2Cache_ = x_*x_ + y_*y_;
+            len2Dirty_ = false;
+        }
+        return len2Cache_;
+    }
+
+    static GmVec<double, 2> random() {
+        return GmVec<double, 2>(randomDouble(), randomDouble());
+    }
+
+    static GmVec<double, 2> random(double min, double max) {
+        return GmVec<double, 2>(randomDouble(min,max), randomDouble(min,max));
+    }
+
+    // --------------------------------------- Setters --------------------------------------------
+    void setX(const T scalar) noexcept
+    {
+        x_ = scalar;
+        len2Dirty_ = true;
+    }
+    void setY(const T scalar) noexcept
+    {
+        y_ = scalar;
+        len2Dirty_ = true;
+    }
+
+    // ---------------- Stream operators ----------------------------------------------------------
+    friend std::ostream& operator<<(std::ostream& os, const GmVec<T,2>& v) {
+        return os << "vec2{" << v.x_ << ", " << v.y_ << "}";
+    }
+
+    friend std::istream& operator>>(std::istream& is, GmVec<T,2>& v) {
+        T x, y;
+        is >> x >> y;
+        if (is) {
+            v.x_ = x; 
+            v.y_ = y;
+            v.len2Dirty_ = true;
+        }
+        return is;
+    }
+};
+
 
 // --------------------- Free functions -------------------------------------------------------
 
