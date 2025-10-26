@@ -26,6 +26,9 @@
 namespace gm 
 {
 
+std::ostream &operator<<(std::ostream &stream, const __m256d &v);
+std::ostream &operator<<(std::ostream &stream, const __m128d &v);
+
 void mm_256_set_elem(__m256d &v, size_t n, double value);
 double mm_256_get_elem(const __m256d &v, size_t n);
 double mm_128_get_elem(const __m128d &v, int n);
@@ -213,10 +216,9 @@ public:
         if (len2Dirty_) {
            
             __m256d v2 = _mm256_mul_pd(cords_, cords_);
-            __m256d sum1 = _mm256_hadd_pd(v2, v2);     // [y^2 + x^2, z^2 + 0, y^2 + x^2, z^2 + 0]
-            __m128d lo = _mm256_castpd256_pd128(sum1); // [y^2 + x^2, z^2 + 0]
-            len2Cache_ = _mm_cvtsd_f64(lo) + _mm_cvtsd_f64(_mm_unpackhi_pd(lo, lo));
-
+            __m256d sum = _mm256_hadd_pd(v2, v2);      // [w^2 + z^2, w^2 + z^2, y^2 + x^2, y^2 + x^2]
+            len2Cache_ = mm_256_get_elem(sum, 0) + mm_256_get_elem(sum, 3);
+        
             len2Dirty_ = false;
         }
         return len2Cache_;
@@ -247,9 +249,8 @@ public:
     {
         mm_256_set_elem(cords_, 2, scalar);
         len2Dirty_ = true;
-    }
-
-    // ---------------- Stream operators ----------------------------------------------------------
+    }    // ---------------- Stream operators ----------------------------------------------------------
+    
     friend std::ostream& operator<<(std::ostream& os, const IVec3& v) {
         return os << "vec3{" << v.x() << ", " << v.y() << ", " << v.z() << "}";
     }
@@ -274,7 +275,9 @@ public:
 inline double dot(const IVec3 &a, const IVec3 &b) noexcept {
     GM_ASSERT_VEC3(a);
     GM_ASSERT_VEC3(b);
-    return a.x() * b.x() + a.y() * b.y() + a.z() * b.z();
+
+    __m256d mul = _mm256_mul_pd(a.cords(), b.cords());
+    return mm_256_get_elem(mul, 0) + mm_256_get_elem(mul, 1) + mm_256_get_elem(mul, 2);
 }
 
 inline IVec3 getOrtogonal(const IVec3 a, const IVec3 b) {
@@ -360,24 +363,9 @@ public:
     }
 
     // Setters (modify in-place)
-    void setX(double v) noexcept {
-        __m128d lo = _mm256_castpd256_pd128(cords_);               // [y, x]
-        lo = _mm_move_sd(_mm_set_sd(v), lo);                       // replace low (x)
-        cords_ = _mm256_insertf128_pd(cords_, lo, 0);
-    }
-
-    void setY(double v) noexcept {
-        __m128d lo = _mm256_castpd256_pd128(cords_);               // [y, x]
-        __m128d tmp = _mm_set_sd(v);                               // [0, v] (low = v)
-        lo = _mm_shuffle_pd(lo, tmp, 0b01);                        // build [v, x] -> high becomes v
-        cords_ = _mm256_insertf128_pd(cords_, lo, 0);
-    }
-
-    void setZ(double v) noexcept {
-        __m128d hi = _mm256_extractf128_pd(cords_, 1);             // [w, z] (low = z)
-        hi = _mm_move_sd(_mm_set_sd(v), hi);                       // replace low (z)
-        cords_ = _mm256_insertf128_pd(cords_, hi, 1);
-    }
+    void setX(const double scalar) { mm_256_set_elem(cords_, 0, scalar); }
+    void setY(const double scalar) { mm_256_set_elem(cords_, 1, scalar); }
+    void setZ(const double scalar) { mm_256_set_elem(cords_, 2, scalar); }
 
     // stream operators
     friend std::ostream& operator<<(std::ostream& os, const IPoint3& p) {

@@ -3,6 +3,24 @@
 namespace gm
 {
 
+std::ostream &operator<<(std::ostream &stream, const __m256d &v) {
+    stream << "[";
+    for (size_t i = 0; i < 3; i++)
+        stream << mm_256_get_elem(v, i) << ", ";
+    stream << mm_256_get_elem(v, 3) << "]";
+
+    return stream;
+}
+
+std::ostream &operator<<(std::ostream &stream, const __m128d &v) {
+    stream << "[";
+    for (size_t i = 0; i < 1; i++)
+        stream << mm_128_get_elem(v, i) << ", ";
+    stream << mm_128_get_elem(v, 1) << "]";
+
+    return stream;
+}
+
 void mm_256_set_elem(__m256d &v, size_t n, double value) {
     switch (n) {
         case 0: {
