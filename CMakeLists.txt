@@ -7,6 +7,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 add_library(GeomLib STATIC
     ${CMAKE_CURRENT_SOURCE_DIR}/src/Geom.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/IntinsicGeom.cpp
 )
 
 target_compile_options(GeomLib PUBLIC -march=native -mtune=native)

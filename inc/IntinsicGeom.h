@@ -1,6 +1,7 @@
-#ifndef GEOM_H
-#define GEOM_H
+#ifndef INTRINSIC_GEOM_H
+#define INTRINSIC_GEOM_H
 
+#include "Geom.h"
 #include <immintrin.h>
 #include <concepts>
 #include <cmath>
@@ -12,9 +13,6 @@
 #include <random>
 
 
-namespace gm 
-{
-
 #ifdef GM_DEBUG
     #define GM_ASSERT_VEC3(v) assert( (v).isFinite() )
     #define GM_ASSERT_VEC2(v) assert( (v).isFinite() )
@@ -25,99 +23,32 @@ namespace gm
     #define GM_ASSERT(cond) ((void)0)
 #endif
 
+namespace gm 
+{
 
-inline double degrees_to_radians(double degrees) {
-    return degrees * M_PI / 180.0;
-}
+void mm_256_set_elem(__m256d &v, size_t n, double value);
+double mm_256_get_elem(const __m256d &v, size_t n);
+double mm_128_get_elem(const __m128d &v, int n);
+void mm_128_set_elem(__m128d &v, int n, double value);
 
-inline double randomDouble() {
-    static std::uniform_real_distribution<double> distribution(0.0, 1.0);
-    static std::mt19937 generator;
-    return distribution(generator);
-}
-
-inline double randomDouble(double min, double max) {
-    return min + (max-min)*randomDouble();
-}
-
-inline void mm_256_set_elem(__m256d &v, size_t n, double value) {
-    switch (n) {
-        case 0: {
-            __m128d lo = _mm256_castpd256_pd128(v);
-            lo = _mm_move_sd(lo, _mm_set_sd(value)); 
-            v = _mm256_insertf128_pd(v, lo, 0);
-            break;
-        }
-        case 1: {
-            __m128d lo = _mm256_castpd256_pd128(v);
-            __m128d tmp = _mm_set_sd(value);
-            lo = _mm_shuffle_pd(lo, tmp, 0b01); 
-            v = _mm256_insertf128_pd(v, lo, 0);
-            break;
-        }
-        case 2: {
-            __m128d hi = _mm256_extractf128_pd(v, 1);
-            hi = _mm_move_sd(hi, _mm_set_sd(value));
-            v = _mm256_insertf128_pd(v, hi, 1);
-            break;
-        }
-        case 3: {
-            __m128d hi = _mm256_extractf128_pd(v, 1);
-            __m128d tmp = _mm_set_sd(value);
-            hi = _mm_shuffle_pd(hi, tmp, 0b01); 
-            v = _mm256_insertf128_pd(v, hi, 1);
-            break;
-        }
-        default:
-            assert(0 && "n > 3");
-    }
-}
-
-inline double mm_256_get_elem(const __m256d &v, size_t n) {
-    switch (n) {
-        case 0: 
-            return _mm256_cvtsd_f64(v);
-        
-        case 1: {
-            __m128d lo = _mm256_castpd256_pd128(v);
-            return _mm_cvtsd_f64(_mm_shuffle_pd(lo, lo, 0b01));
-        }
-        
-        case 2: {
-            __m128d hi = _mm256_extractf128_pd(v, 1);
-            return _mm_cvtsd_f64(hi);
-        }
-
-        case 3: {
-            __m128d hi = _mm256_extractf128_pd(v, 1);
-            return _mm_cvtsd_f64(_mm_shuffle_pd(hi, hi, 0b01));
-        }
-    
-        default:
-            assert(0 && "n > 3");
-            return 0.0;
-    }
-}
-
-
-// ------------------------------------ 3D specialization ------------------------------------
+/* -------------------- IVec3 -------------------- */
 class IVec3 {
     __m256d cords_;
     mutable double len2Cache_;
     mutable bool len2Dirty_;
 
 public:
-    constexpr IVec3() noexcept: cords_(), len2Cache_(), len2Dirty_(true) { _mm256_setzero_pd(); }
-    constexpr IVec3(double x, double y, double z) noexcept: cords_(), len2Cache_(), len2Dirty_(true) { _mm256_set_pd(0, z, y, x); }
-    constexpr explicit IVec3(__m256d cords) noexcept: cords_(cords), len2Cache_(), len2Dirty_(true) { }
-    constexpr explicit IVec3(double val) noexcept: cords_(), len2Cache_(), len2Dirty_(true) { _mm256_set1_pd(val); }
+    IVec3() noexcept: cords_(_mm256_setzero_pd()), len2Cache_(), len2Dirty_(true) {}
+    IVec3(double x, double y, double z) noexcept: cords_(_mm256_set_pd(0, z, y, x)), len2Cache_(), len2Dirty_(true) {}
+    explicit IVec3(__m256d cords) noexcept: cords_(cords), len2Cache_(), len2Dirty_(true) {}
+    explicit IVec3(double val) noexcept: cords_(_mm256_set1_pd(val)), len2Cache_(), len2Dirty_(true) {}
 
-    constexpr IVec3(const IVec3 &other) noexcept
+    IVec3(const IVec3 &other) noexcept
         : cords_(other.cords_),
           len2Cache_(), len2Dirty_(true) {}
 
     // ------------------------------------ Operators ------------------------------------
-    constexpr IVec3 operator+(const IVec3 &other) const {
+    IVec3 operator+(const IVec3 &other) const {
         GM_ASSERT_VEC3(*this);
         GM_ASSERT_VEC3(other);
 
@@ -127,7 +58,7 @@ public:
     }
 
 
-    constexpr IVec3 operator-(const IVec3 &other) const {
+    IVec3 operator-(const IVec3 &other) const {
         GM_ASSERT_VEC3(*this);
         GM_ASSERT_VEC3(other);
 
@@ -136,7 +67,7 @@ public:
         return IVec3(reCords);
     }
 
-    constexpr IVec3 operator*(const IVec3 &other) const {
+    IVec3 operator*(const IVec3 &other) const {
         GM_ASSERT_VEC3(*this);
         GM_ASSERT_VEC3(other);
 
@@ -145,7 +76,7 @@ public:
         return IVec3(reCords);
     }
 
-    constexpr IVec3 operator*(const double scalar) const {
+    IVec3 operator*(const double scalar) const {
         GM_ASSERT_VEC3(*this);
 
         __m256d scalarVec = _mm256_set1_pd(scalar);
@@ -154,7 +85,7 @@ public:
         return IVec3(reCords);
     }
 
-    constexpr IVec3 operator/(const double scalar) const {
+    IVec3 operator/(const double scalar) const {
         GM_ASSERT_VEC3(*this);
         GM_ASSERT(scalar != 0);
 
@@ -164,7 +95,7 @@ public:
         return IVec3(reCords);
     }
 
-    constexpr IVec3 operator+=(const IVec3 &other) {
+    IVec3 operator+=(const IVec3 &other) {
         GM_ASSERT_VEC3(*this);
         GM_ASSERT_VEC3(other);
 
@@ -175,7 +106,7 @@ public:
         return *this;
     }
 
-    constexpr IVec3 operator-=(const IVec3 &other) {
+    IVec3 operator-=(const IVec3 &other) {
         GM_ASSERT_VEC3(*this);
         GM_ASSERT_VEC3(other);
 
@@ -185,7 +116,7 @@ public:
         return *this;
     }
 
-    constexpr IVec3 operator*=(const IVec3 &other) {
+    IVec3 operator*=(const IVec3 &other) {
         GM_ASSERT_VEC3(*this);
         GM_ASSERT_VEC3(other);
 
@@ -195,7 +126,7 @@ public:
         return *this;
     }
 
-    constexpr IVec3 operator/=(const double scalar) {
+    IVec3 operator/=(const double scalar) {
         GM_ASSERT_VEC3(*this);
         GM_ASSERT(scalar != 0);
 
@@ -209,14 +140,14 @@ public:
     IVec3 &operator=(const IVec3 &other) = default;
 
     // --------------------------------------- Math -----------------------------------------------
-    [[nodiscard]] constexpr IVec3 clamped(const double min, const double max) const {
+    [[nodiscard]] IVec3 clamped(const double min, const double max) const {
         GM_ASSERT_VEC3(*this);
 
         __m256d minVec = _mm256_set1_pd(min);
         __m256d maxVec = _mm256_set1_pd(max);
 
         __m256d clamped = _mm256_max_pd(cords_, minVec);
-                clamped = _mm256_min_pd(cords_, maxVec); 
+                clamped = _mm256_min_pd(clamped, maxVec); 
 
         return IVec3(clamped);
     }
@@ -256,27 +187,28 @@ public:
        
     }
 
-    constexpr bool isFinite() const {
+    bool isFinite() const {
         return std::isfinite(x()) && std::isfinite(y()) && std::isfinite(z());
     }
 
     inline bool nearZero() const {
         const double eps = std::numeric_limits<double>::epsilon();
-        return (fabs(x()) < eps) && (fabs(y()) < eps) && (fabs(z()) < eps);
+        return (std::fabs(x()) < eps) && (std::fabs(y()) < eps) && (std::fabs(z()) < eps);
     }
 
-    [[nodiscard]] constexpr IVec3 normalized() const {
+    [[nodiscard]] IVec3 normalized() const {
         double len = length();
         return len > double(0) ? *this / len : IVec3();
     }
 
     // --------------------------------------- Getters --------------------------------------------
-    constexpr double x() const { return mm_256_get_elem(cords_, 0); }
-    constexpr double y() const { return mm_256_get_elem(cords_, 1); }    
-    constexpr double z() const { return mm_256_get_elem(cords_, 2); }
+    double x() const { return mm_256_get_elem(cords_, 0); }
+    double y() const { return mm_256_get_elem(cords_, 1); }    
+    double z() const { return mm_256_get_elem(cords_, 2); }
+    __m256d cords() const { return cords_; }
 
-    constexpr double length() const { return std::sqrt(length2()); }
-    constexpr double length2() const 
+    double length() const { return std::sqrt(length2()); }
+    double length2() const 
     {
         if (len2Dirty_) {
            
@@ -336,6 +268,279 @@ public:
     }
 };
 
+
+
+// --------------------- Free functions -------------------------------------------------------
+inline double dot(const IVec3 &a, const IVec3 &b) noexcept {
+    GM_ASSERT_VEC3(a);
+    GM_ASSERT_VEC3(b);
+    return a.x() * b.x() + a.y() * b.y() + a.z() * b.z();
 }
 
-#endif // GEOM_H
+inline IVec3 getOrtogonal(const IVec3 a, const IVec3 b) {
+    double bLen2 = b.length2();
+    double c = dot(a, b) / bLen2;
+    return a - b * c;
+}
+
+inline IVec3 cross(const IVec3 &a, const IVec3 &b) noexcept {
+    GM_ASSERT_VEC3(a);
+    GM_ASSERT_VEC3(b);
+    return IVec3{
+        a.y() * b.z() - a.z() * b.y(),
+        a.z() * b.x() - a.x() * b.z(),
+        a.x() * b.y() - a.y() * b.x()
+    };
+}
+
+inline IVec3 cordPow(const IVec3 &base, const IVec3 &exp) {
+    GM_ASSERT_VEC3(base);
+    GM_ASSERT_VEC3(exp);
+    GM_ASSERT(base.x() >= 0 && base.y() >= 0 && base.z() >= 0);
+
+    return IVec3{
+        std::pow(static_cast<double>(base.x()), exp.x()),
+        std::pow(static_cast<double>(base.y()), exp.y()),
+        std::pow(static_cast<double>(base.z()), exp.z())
+    };
+}
+
+
+class IPoint3 {
+    __m256d cords_; // [w, z, y, x] when created with _mm256_set_pd
+
+public:
+    IPoint3() noexcept : cords_(_mm256_setzero_pd()) {}
+    IPoint3(double x, double y, double z) noexcept : cords_(_mm256_set_pd(0.0, z, y, x)) {}
+    explicit IPoint3(__m256d cords) noexcept : cords_(cords) {}
+    explicit IPoint3(double v) noexcept : cords_(_mm256_set1_pd(v)) {}
+
+    // copy / assign
+    IPoint3(const IPoint3& o) noexcept = default;
+    IPoint3& operator=(const IPoint3& o) noexcept = default;
+
+    // Point - Point = Vector (requires IVec3(__m256d))
+    IVec3 operator-(const IPoint3 &other) const noexcept {
+        return IVec3(_mm256_sub_pd(cords_, other.cords_));
+    }
+
+    // Point + Vector = Point
+    IPoint3 operator+(const IVec3 &vec) const noexcept {
+        return IPoint3(_mm256_add_pd(cords_, vec.cords()));
+    }
+
+    // Point - Vector = Point
+    IPoint3 operator-(const IVec3 &vec) const noexcept {
+        return IPoint3(_mm256_sub_pd(cords_, vec.cords()));
+    }
+
+    // Scalar ops
+    IPoint3 operator*(double s) const noexcept {
+        __m256d sv = _mm256_set1_pd(s);
+        return IPoint3(_mm256_mul_pd(cords_, sv));
+    }
+    IPoint3 operator/(double s) const noexcept {
+        assert(s != 0.0);
+        __m256d sv = _mm256_set1_pd(s);
+        return IPoint3(_mm256_div_pd(cords_, sv));
+    }
+
+    // Accessors (no memory stores)
+    double x() const noexcept { return _mm256_cvtsd_f64(cords_); }
+
+    double y() const noexcept {
+        __m128d lo = _mm256_castpd256_pd128(cords_);               // [y, x]
+        __m128d sh = _mm_shuffle_pd(lo, lo, 0b01);                 // [x, y] -> move high to low
+        return _mm_cvtsd_f64(sh);                                  // low of shuffled -> original y
+    }
+
+    double z() const noexcept {
+        __m128d hi = _mm256_extractf128_pd(cords_, 1);             // [w, z] in hi: low= z
+        return _mm_cvtsd_f64(hi);
+    }
+
+    // Setters (modify in-place)
+    void setX(double v) noexcept {
+        __m128d lo = _mm256_castpd256_pd128(cords_);               // [y, x]
+        lo = _mm_move_sd(_mm_set_sd(v), lo);                       // replace low (x)
+        cords_ = _mm256_insertf128_pd(cords_, lo, 0);
+    }
+
+    void setY(double v) noexcept {
+        __m128d lo = _mm256_castpd256_pd128(cords_);               // [y, x]
+        __m128d tmp = _mm_set_sd(v);                               // [0, v] (low = v)
+        lo = _mm_shuffle_pd(lo, tmp, 0b01);                        // build [v, x] -> high becomes v
+        cords_ = _mm256_insertf128_pd(cords_, lo, 0);
+    }
+
+    void setZ(double v) noexcept {
+        __m128d hi = _mm256_extractf128_pd(cords_, 1);             // [w, z] (low = z)
+        hi = _mm_move_sd(_mm_set_sd(v), hi);                       // replace low (z)
+        cords_ = _mm256_insertf128_pd(cords_, hi, 1);
+    }
+
+    // stream operators
+    friend std::ostream& operator<<(std::ostream& os, const IPoint3& p) {
+        return os << "point3{" << p.x() << ", " << p.y() << ", " << p.z() << "}";
+    }
+    friend std::istream& operator>>(std::istream& is, IPoint3& p) {
+        double a, b, c;
+        is >> a >> b >> c;
+        if (is) { p.setX(a); p.setY(b); p.setZ(c); }
+        return is;
+    }
+};
+
+
+/* -------------------- IVec2 -------------------- */
+class IVec2 {
+    __m128d cords_;            // layout: _mm_set_pd(y, x) => cords_[0]=x, cords_[1]=y
+    mutable double len2Cache_;
+    mutable bool len2Dirty_;
+
+public:
+    IVec2() noexcept : cords_(_mm_setzero_pd()), len2Cache_(0.0), len2Dirty_(true) {}
+    IVec2(double x, double y) noexcept : cords_(_mm_set_pd(y, x)), len2Cache_(0.0), len2Dirty_(true) {}
+    explicit IVec2(__m128d cords) noexcept : cords_(cords), len2Cache_(0.0), len2Dirty_(true) {}
+    explicit IVec2(double val) noexcept : cords_(_mm_set1_pd(val)), len2Cache_(0.0), len2Dirty_(true) {}
+
+    // copy / assign default
+    IVec2(const IVec2& o) noexcept = default;
+    IVec2& operator=(const IVec2& o) noexcept = default;
+
+    // arithmetic
+    IVec2 operator+(const IVec2 &o) const noexcept { return IVec2(_mm_add_pd(cords_, o.cords_)); }
+    IVec2 operator-(const IVec2 &o) const noexcept { return IVec2(_mm_sub_pd(cords_, o.cords_)); }
+    IVec2 operator*(double s) const noexcept {
+        __m128d sv = _mm_set1_pd(s);
+        return IVec2(_mm_mul_pd(cords_, sv));
+    }
+    IVec2 operator/(double s) const noexcept {
+        assert(s != 0.0);
+        __m128d sv = _mm_set1_pd(s);
+        return IVec2(_mm_div_pd(cords_, sv));
+    }
+
+    IVec2& operator+=(const IVec2 &o) noexcept { cords_ = _mm_add_pd(cords_, o.cords_); len2Dirty_ = true; return *this; }
+    IVec2& operator-=(const IVec2 &o) noexcept { cords_ = _mm_sub_pd(cords_, o.cords_); len2Dirty_ = true; return *this; }
+    IVec2& operator*=(double s) noexcept { __m128d sv = _mm_set1_pd(s); cords_ = _mm_mul_pd(cords_, sv); len2Dirty_ = true; return *this; }
+    IVec2& operator/=(double s) noexcept { assert(s != 0.0); __m128d sv = _mm_set1_pd(s); cords_ = _mm_div_pd(cords_, sv); len2Dirty_ = true; return *this; }
+
+    // accessors
+    double x() const noexcept { return mm_128_get_elem(cords_, 0); }
+    double y() const noexcept { return mm_128_get_elem(cords_, 1); }
+    __m128d cords() const { return cords_; }
+
+    void setX(double v) noexcept { mm_128_set_elem(cords_, 0, v); len2Dirty_ = true; }
+    void setY(double v) noexcept { mm_128_set_elem(cords_, 1, v); len2Dirty_ = true; }
+
+    // math
+    double dot(const IVec2 &o) const noexcept {
+        __m128d m = _mm_mul_pd(cords_, o.cords_);          // [y1*y2, x1*x2]
+        __m128d h = _mm_hadd_pd(m, m);                    // [x1*x2 + y1*y2, ...]
+        return _mm_cvtsd_f64(h);
+    }
+
+    double length2() const noexcept {
+        if (len2Dirty_) {
+            __m128d m = _mm_mul_pd(cords_, cords_);
+            __m128d h = _mm_hadd_pd(m, m);
+            len2Cache_ = _mm_cvtsd_f64(h);
+            len2Dirty_ = false;
+        }
+        return len2Cache_;
+    }
+
+    double length() const noexcept { return std::sqrt(length2()); }
+
+    IVec2 normalized() const noexcept {
+        double len = length();
+        if (len == 0.0) return IVec2(0.0, 0.0);
+        return *this / len;
+    }
+
+    bool isFinite() const noexcept { return std::isfinite(x()) && std::isfinite(y()); }
+
+    bool nearZero() const noexcept {
+        const double eps = std::numeric_limits<double>::epsilon();
+        return (std::fabs(x()) < eps) && (std::fabs(y()) < eps);
+    }
+
+    // stream
+    friend std::ostream& operator<<(std::ostream& os, const IVec2& v) {
+        return os << "ivec2{" << v.x() << ", " << v.y() << "}";
+    }
+    friend std::istream& operator>>(std::istream& is, IVec2& v) {
+        double a, b;
+        is >> a >> b;
+        if (is) {
+            v.setX(a);
+            v.setY(b);
+            v.len2Dirty_ = true;
+        }
+        return is;
+    }
+};
+
+/* -------------------- IPoint2 -------------------- */
+class IPoint2 {
+    __m128d cords_; // same layout: _mm_set_pd(y,x)
+
+public:
+    IPoint2() noexcept : cords_(_mm_setzero_pd()) {}
+    IPoint2(double x, double y) noexcept : cords_(_mm_set_pd(y, x)) {}
+    explicit IPoint2(__m128d cords) noexcept : cords_(cords) {}
+    explicit IPoint2(double v) noexcept : cords_(_mm_set1_pd(v)) {}
+
+    // copy / assign default
+    IPoint2(const IPoint2& o) noexcept = default;
+    IPoint2& operator=(const IPoint2& o) noexcept = default;
+
+    // point - point = vector
+    IVec2 operator-(const IPoint2 &o) const noexcept {
+        return IVec2(_mm_sub_pd(cords_, o.cords_));
+    }
+
+    // point + vector = point
+    IPoint2 operator+(const IVec2 &vec) const noexcept {
+        return IPoint2(_mm_add_pd(cords_, vec.cords()));
+    }
+
+    // point - vector = point
+    IPoint2 operator-(const IVec2 &vec) const noexcept {
+        return IPoint2(_mm_sub_pd(cords_, vec.cords()));
+    }
+
+    // scalar ops
+    IPoint2 operator*(double s) const noexcept {
+        __m128d sv = _mm_set1_pd(s);
+        return IPoint2(_mm_mul_pd(cords_, sv));
+    }
+    IPoint2 operator/(double s) const noexcept {
+        assert(s != 0.0);
+        __m128d sv = _mm_set1_pd(s);
+        return IPoint2(_mm_div_pd(cords_, sv));
+    }
+
+    // accessors
+    double x() const noexcept { return mm_128_get_elem(cords_, 0); }
+    double y() const noexcept { return mm_128_get_elem(cords_, 1); }
+
+    void setX(double v) noexcept { mm_128_set_elem(cords_, 0, v); }
+    void setY(double v) noexcept { mm_128_set_elem(cords_, 1, v); }
+
+    // stream
+    friend std::ostream& operator<<(std::ostream& os, const IPoint2& p) {
+        return os << "point2{" << p.x() << ", " << p.y() << "}";
+    }
+    friend std::istream& operator>>(std::istream& is, IPoint2& p) {
+        double a, b;
+        is >> a >> b;
+        if (is) { p.setX(a); p.setY(b); }
+        return is;
+    }
+};
+
+}
+
+#endif // INTRINSIC_GEOM_H

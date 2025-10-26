@@ -21,6 +21,8 @@
     #define GM_ASSERT(cond) ((void)0)
 #endif
 
+namespace gm
+{
 
 inline double degrees_to_radians(double degrees) {
     return degrees * M_PI / 180.0;
@@ -461,14 +463,14 @@ inline GmVec<T, 3> getOrtogonal(const GmVec<T, 3> a, const GmVec<T, 3> b) {
 }
 
 template<std::floating_point T>
-constexpr T dot(const GmVec<T,3> &a, const GmVec<T,3> &b) noexcept {
+inline T dot(const GmVec<T,3> &a, const GmVec<T,3> &b) noexcept {
     GM_ASSERT_VEC3(a);
     GM_ASSERT_VEC3(b);
     return a.x() * b.x() + a.y() * b.y() + a.z() * b.z();
 }
 
 template<std::floating_point T>
-constexpr GmVec<T,3> cross(const GmVec<T,3> &a, const GmVec<T,3> &b) noexcept {
+inline GmVec<T,3> cross(const GmVec<T,3> &a, const GmVec<T,3> &b) noexcept {
     GM_ASSERT_VEC3(a);
     GM_ASSERT_VEC3(b);
     return GmVec<T,3>{
@@ -479,7 +481,7 @@ constexpr GmVec<T,3> cross(const GmVec<T,3> &a, const GmVec<T,3> &b) noexcept {
 }
 
 template<std::floating_point T>
-GmVec<T,3> cordPow(const GmVec<T,3> &base, const GmVec<T,3> &exp) {
+inline GmVec<T,3> cordPow(const GmVec<T,3> &base, const GmVec<T,3> &exp) {
     GM_ASSERT_VEC3(base);
     GM_ASSERT_VEC3(exp);
     GM_ASSERT(base.x() >= T(0) && base.y() >= T(0) && base.z() >= T(0));
@@ -551,5 +553,6 @@ struct GmPoint<T, 3> {
     }
 };
 
+}
 
 #endif // GEOM_H
