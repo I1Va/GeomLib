@@ -5,6 +5,7 @@
 #include <cmath>
 #include <cassert>
 #include <limits>
+#include <immintrin.h>
 #include <algorithm>
 #include <ostream>
 #include <istream>

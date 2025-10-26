@@ -9,6 +9,8 @@ add_library(GeomLib STATIC
     ${CMAKE_CURRENT_SOURCE_DIR}/src/Geom.cpp
 )
 
+target_compile_options(GeomLib PUBLIC -march=native -mtune=native)
+
 target_include_directories(GeomLib
     PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/inc
 )
