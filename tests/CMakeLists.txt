@@ -8,8 +8,10 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # Library source files
 # -----------------------------
 set(LIB_SOURCES
-    ${CMAKE_CURRENT_SOURCE_DIR}/../src/Geom.cpp   # all library .cpp files
-    ${CMAKE_CURRENT_SOURCE_DIR}/../src/IntinsicGeom.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../src/Geom.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../src/IVec3d.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../src/IVec3f.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../src/GmUtilities.cpp
 )
 
 # -----------------------------

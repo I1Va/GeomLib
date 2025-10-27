@@ -1,27 +1,25 @@
-#include "IntinsicGeom.h"
+#include <random>
+#include <cassert>
+
+#include "GmUtilities.hpp"
+
 
 namespace gm
 {
 
-std::ostream &operator<<(std::ostream &stream, const __m256d &v) {
-    stream << "[";
-    for (size_t i = 0; i < 3; i++)
-        stream << mm_256_get_elem(v, i) << ", ";
-    stream << mm_256_get_elem(v, 3) << "]";
-
-    return stream;
+double randomDouble() {
+    static std::uniform_real_distribution<double> distribution(0.0, 1.0);
+    static std::mt19937 generator;
+    return distribution(generator);
 }
 
-std::ostream &operator<<(std::ostream &stream, const __m128d &v) {
-    stream << "[";
-    for (size_t i = 0; i < 1; i++)
-        stream << mm_128_get_elem(v, i) << ", ";
-    stream << mm_128_get_elem(v, 1) << "]";
-
-    return stream;
+float randomFloat() {
+    static std::uniform_real_distribution<float> distribution(0.0, 1.0);
+    static std::mt19937 generator;
+    return distribution(generator);
 }
 
-void mm_256_set_elem(__m256d &v, size_t n, double value) {
+void mm_256_set_elem(__m256d &v, std::size_t n, double value) {
     switch (n) {
         case 0: {
             __m128d lo = _mm256_castpd256_pd128(v);
@@ -54,7 +52,7 @@ void mm_256_set_elem(__m256d &v, size_t n, double value) {
     }
 }
 
-double mm_256_get_elem(const __m256d &v, size_t n) {
+double mm_256_get_elem(const __m256d &v, std::size_t n) {
     switch (n) {
         case 0: 
             return _mm256_cvtsd_f64(v);

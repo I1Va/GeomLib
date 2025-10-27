@@ -1,17 +1,10 @@
-#ifndef INTRINSIC_GEOM_H
-#define INTRINSIC_GEOM_H
+#pragma once
 
-#include "Geom.h"
 #include <immintrin.h>
-#include <concepts>
-#include <cmath>
+#include <iostream>
 #include <cassert>
-#include <limits>
-#include <algorithm>
-#include <ostream>
-#include <istream>
-#include <random>
 
+#include "GmUtilities.hpp"
 
 #ifdef GM_DEBUG
     #define GM_ASSERT_VEC3(v) assert( (v).isFinite() )
@@ -29,76 +22,71 @@ namespace gm
 std::ostream &operator<<(std::ostream &stream, const __m256d &v);
 std::ostream &operator<<(std::ostream &stream, const __m128d &v);
 
-void mm_256_set_elem(__m256d &v, size_t n, double value);
-double mm_256_get_elem(const __m256d &v, size_t n);
-double mm_128_get_elem(const __m128d &v, int n);
-void mm_128_set_elem(__m128d &v, int n, double value);
-
-/* -------------------- IVec3 -------------------- */
-class IVec3 {
+/* -------------------- IVec3d -------------------- */
+class IVec3d {
     __m256d cords_;
     mutable double len2Cache_;
     mutable bool len2Dirty_;
 
 public:
-    IVec3() noexcept: cords_(_mm256_setzero_pd()), len2Cache_(), len2Dirty_(true) {}
-    IVec3(double x, double y, double z) noexcept: cords_(_mm256_set_pd(0, z, y, x)), len2Cache_(), len2Dirty_(true) {}
-    explicit IVec3(__m256d cords) noexcept: cords_(cords), len2Cache_(), len2Dirty_(true) {}
-    explicit IVec3(double val) noexcept: cords_(_mm256_set1_pd(val)), len2Cache_(), len2Dirty_(true) {}
+    IVec3d() noexcept: cords_(_mm256_setzero_pd()), len2Cache_(), len2Dirty_(true) {}
+    IVec3d(double x, double y, double z) noexcept: cords_(_mm256_set_pd(0, z, y, x)), len2Cache_(), len2Dirty_(true) {}
+    explicit IVec3d(__m256d cords) noexcept: cords_(cords), len2Cache_(), len2Dirty_(true) {}
+    explicit IVec3d(double val) noexcept: cords_(_mm256_set1_pd(val)), len2Cache_(), len2Dirty_(true) {}
 
-    IVec3(const IVec3 &other) noexcept
+    IVec3d(const IVec3d &other) noexcept
         : cords_(other.cords_),
           len2Cache_(), len2Dirty_(true) {}
 
     // ------------------------------------ Operators ------------------------------------
-    IVec3 operator+(const IVec3 &other) const {
+    IVec3d operator+(const IVec3d &other) const {
         GM_ASSERT_VEC3(*this);
         GM_ASSERT_VEC3(other);
 
         __m256d reCords = _mm256_add_pd(cords_, other.cords_);
 
-        return IVec3(reCords);
+        return IVec3d(reCords);
     }
 
 
-    IVec3 operator-(const IVec3 &other) const {
+    IVec3d operator-(const IVec3d &other) const {
         GM_ASSERT_VEC3(*this);
         GM_ASSERT_VEC3(other);
 
         __m256d reCords = _mm256_sub_pd(cords_, other.cords_);
 
-        return IVec3(reCords);
+        return IVec3d(reCords);
     }
 
-    IVec3 operator*(const IVec3 &other) const {
+    IVec3d operator*(const IVec3d &other) const {
         GM_ASSERT_VEC3(*this);
         GM_ASSERT_VEC3(other);
 
         __m256d reCords = _mm256_mul_pd(cords_, other.cords_);
 
-        return IVec3(reCords);
+        return IVec3d(reCords);
     }
 
-    IVec3 operator*(const double scalar) const {
+    IVec3d operator*(const double scalar) const {
         GM_ASSERT_VEC3(*this);
 
         __m256d scalarVec = _mm256_set1_pd(scalar);
         __m256d reCords = _mm256_mul_pd(cords_, scalarVec);
 
-        return IVec3(reCords);
+        return IVec3d(reCords);
     }
 
-    IVec3 operator/(const double scalar) const {
+    IVec3d operator/(const double scalar) const {
         GM_ASSERT_VEC3(*this);
         GM_ASSERT(scalar != 0);
 
         __m256d scalarVec = _mm256_set1_pd(scalar);
         __m256d reCords = _mm256_div_pd(cords_, scalarVec);
 
-        return IVec3(reCords);
+        return IVec3d(reCords);
     }
 
-    IVec3 operator+=(const IVec3 &other) {
+    IVec3d operator+=(const IVec3d &other) {
         GM_ASSERT_VEC3(*this);
         GM_ASSERT_VEC3(other);
 
@@ -109,7 +97,7 @@ public:
         return *this;
     }
 
-    IVec3 operator-=(const IVec3 &other) {
+    IVec3d operator-=(const IVec3d &other) {
         GM_ASSERT_VEC3(*this);
         GM_ASSERT_VEC3(other);
 
@@ -119,7 +107,7 @@ public:
         return *this;
     }
 
-    IVec3 operator*=(const IVec3 &other) {
+    IVec3d operator*=(const IVec3d &other) {
         GM_ASSERT_VEC3(*this);
         GM_ASSERT_VEC3(other);
 
@@ -129,7 +117,7 @@ public:
         return *this;
     }
 
-    IVec3 operator/=(const double scalar) {
+    IVec3d operator/=(const double scalar) {
         GM_ASSERT_VEC3(*this);
         GM_ASSERT(scalar != 0);
 
@@ -140,10 +128,10 @@ public:
         return *this;
     }
 
-    IVec3 &operator=(const IVec3 &other) = default;
+    IVec3d &operator=(const IVec3d &other) = default;
 
     // --------------------------------------- Math -----------------------------------------------
-    [[nodiscard]] IVec3 clamped(const double min, const double max) const {
+    [[nodiscard]] IVec3d clamped(const double min, const double max) const {
         GM_ASSERT_VEC3(*this);
 
         __m256d minVec = _mm256_set1_pd(min);
@@ -152,11 +140,11 @@ public:
         __m256d clamped = _mm256_max_pd(cords_, minVec);
                 clamped = _mm256_min_pd(clamped, maxVec); 
 
-        return IVec3(clamped);
+        return IVec3d(clamped);
     }
 
-    void setAngle(const IVec3 &axis, const double radians) {
-        IVec3 k = axis.normalized();
+    void setAngle(const IVec3d &axis, const double radians) {
+        IVec3d k = axis.normalized();
         double ux = k.x(), uy = k.y(), uz = k.z();
 
         double c = std::cos(radians);
@@ -172,8 +160,8 @@ public:
         ); // Rodrigues’ rotation formula
     }
 
-    void rotate(const IVec3 &axis, const double deltaRadians) {
-        IVec3 k = axis.normalized();
+    void rotate(const IVec3d &axis, const double deltaRadians) {
+        IVec3d k = axis.normalized();
 
         double ux = k.x(), uy = k.y(), uz = k.z();
         double c = std::cos(deltaRadians);
@@ -199,9 +187,9 @@ public:
         return (std::fabs(x()) < eps) && (std::fabs(y()) < eps) && (std::fabs(z()) < eps);
     }
 
-    [[nodiscard]] IVec3 normalized() const {
+    [[nodiscard]] IVec3d normalized() const {
         double len = length();
-        return len > double(0) ? *this / len : IVec3();
+        return len > double(0) ? *this / len : IVec3d();
     }
 
     // --------------------------------------- Getters --------------------------------------------
@@ -224,12 +212,17 @@ public:
         return len2Cache_;
     }
 
-    static IVec3 random() {
-        return IVec3(randomDouble(), randomDouble(), randomDouble());
+    static IVec3d random() {
+        return IVec3d(randomDouble(), randomDouble(), randomDouble());
     }
 
-    static IVec3 random(double min, double max) {
-        return IVec3(randomDouble(min,max), randomDouble(min,max), randomDouble(min,max));
+    static IVec3d random(double min, double max) {
+        return IVec3d(randomDouble(min,max), randomDouble(min,max), randomDouble(min,max));
+    }
+
+    static IVec3d randomUnit() {
+        IVec3d result(randomDouble(), randomDouble(), randomDouble());
+        return result.normalized();
     }
 
     // --------------------------------------- Setters --------------------------------------------
@@ -249,13 +242,14 @@ public:
     {
         mm_256_set_elem(cords_, 2, scalar);
         len2Dirty_ = true;
-    }    // ---------------- Stream operators ----------------------------------------------------------
+    }
     
-    friend std::ostream& operator<<(std::ostream& os, const IVec3& v) {
+    // ---------------- Stream operators ----------------------------------------------------------
+    friend std::ostream& operator<<(std::ostream& os, const IVec3d& v) {
         return os << "vec3{" << v.x() << ", " << v.y() << ", " << v.z() << "}";
     }
 
-    friend std::istream& operator>>(std::istream& is, IVec3& v) {
+    friend std::istream& operator>>(std::istream& is, IVec3d& v) {
         double x, y, z;
         is >> x >> y >> z;
         if (is) {
@@ -266,13 +260,13 @@ public:
             v.len2Dirty_ = true;
         }
         return is;
-    }
+    }  
 };
 
 
 
 // --------------------- Free functions -------------------------------------------------------
-inline double dot(const IVec3 &a, const IVec3 &b) noexcept {
+inline double dot(const IVec3d &a, const IVec3d &b) noexcept {
     GM_ASSERT_VEC3(a);
     GM_ASSERT_VEC3(b);
 
@@ -292,28 +286,28 @@ inline double dot(const IVec3 &a, const IVec3 &b) noexcept {
     return e01 + e2;
 }
 
-inline IVec3 getOrtogonal(const IVec3 a, const IVec3 b) {
+inline IVec3d getOrtogonal(const IVec3d &a, const IVec3d &b) {
     double bLen2 = b.length2();
     double c = dot(a, b) / bLen2;
     return a - b * c;
 }
 
-inline IVec3 cross(const IVec3 &a, const IVec3 &b) noexcept {
+inline IVec3d cross(const IVec3d &a, const IVec3d &b) noexcept {
     GM_ASSERT_VEC3(a);
     GM_ASSERT_VEC3(b);
-    return IVec3{
+    return IVec3d{
         a.y() * b.z() - a.z() * b.y(),
         a.z() * b.x() - a.x() * b.z(),
         a.x() * b.y() - a.y() * b.x()
     };
 }
 
-inline IVec3 cordPow(const IVec3 &base, const IVec3 &exp) {
+inline IVec3d cordPow(const IVec3d &base, const IVec3d &exp) {
     GM_ASSERT_VEC3(base);
     GM_ASSERT_VEC3(exp);
     GM_ASSERT(base.x() >= 0 && base.y() >= 0 && base.z() >= 0);
 
-    return IVec3{
+    return IVec3d{
         std::pow(static_cast<double>(base.x()), exp.x()),
         std::pow(static_cast<double>(base.y()), exp.y()),
         std::pow(static_cast<double>(base.z()), exp.z())
@@ -334,18 +328,18 @@ public:
     IPoint3(const IPoint3& o) noexcept = default;
     IPoint3& operator=(const IPoint3& o) noexcept = default;
 
-    // Point - Point = Vector (requires IVec3(__m256d))
-    IVec3 operator-(const IPoint3 &other) const noexcept {
-        return IVec3(_mm256_sub_pd(cords_, other.cords_));
+    // Point - Point = Vector (requires IVec3d(__m256d))
+    IVec3d operator-(const IPoint3 &other) const noexcept {
+        return IVec3d(_mm256_sub_pd(cords_, other.cords_));
     }
 
     // Point + Vector = Point
-    IPoint3 operator+(const IVec3 &vec) const noexcept {
+    IPoint3 operator+(const IVec3d &vec) const noexcept {
         return IPoint3(_mm256_add_pd(cords_, vec.cords()));
     }
 
     // Point - Vector = Point
-    IPoint3 operator-(const IVec3 &vec) const noexcept {
+    IPoint3 operator-(const IVec3d &vec) const noexcept {
         return IPoint3(_mm256_sub_pd(cords_, vec.cords()));
     }
 
@@ -542,5 +536,3 @@ public:
 };
 
 }
-
-#endif // INTRINSIC_GEOM_H

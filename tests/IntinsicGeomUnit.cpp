@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include "IntinsicGeom.h"
+#include "IVec3d.hpp"
 
 using namespace gm;
 
@@ -13,44 +13,44 @@ int main(int argc, char **argv) {
 }
 
 
-TEST(IVec3DotTest, ZeroVectors) {
-    IVec3 a(0.0, 0.0, 0.0);
-    IVec3 b(0.0, 0.0, 0.0);
+TEST(IVec3dDotTest, ZeroVectors) {
+    IVec3d a(0.0, 0.0, 0.0);
+    IVec3d b(0.0, 0.0, 0.0);
     EXPECT_DOUBLE_EQ(dot(a, b), 0.0);
 }
 
-TEST(IVec3DotTest, IdentityVectors) {
-    IVec3 a(1.0, 0.0, 0.0);
-    IVec3 b(0.0, 1.0, 0.0);
+TEST(IVec3dDotTest, IdentityVectors) {
+    IVec3d a(1.0, 0.0, 0.0);
+    IVec3d b(0.0, 1.0, 0.0);
     EXPECT_DOUBLE_EQ(dot(a, b), 0.0); // orthogonal vectors
 
-    IVec3 c(1.0, 1.0, 1.0);
+    IVec3d c(1.0, 1.0, 1.0);
     EXPECT_DOUBLE_EQ(dot(c, c), 3.0); // dot(v,v) = |v|^2
 }
 
-TEST(IVec3DotTest, PositiveValues) {
-    IVec3 a(1.0, 2.0, 3.0);
-    IVec3 b(4.0, 5.0, 6.0);
+TEST(IVec3dDotTest, PositiveValues) {
+    IVec3d a(1.0, 2.0, 3.0);
+    IVec3d b(4.0, 5.0, 6.0);
     EXPECT_DOUBLE_EQ(dot(a, b), 32.0); // 1*4 + 2*5 + 3*6
 }
 
-TEST(IVec3DotTest, NegativeValues) {
-    IVec3 a(-1.0, -2.0, -3.0);
-    IVec3 b(4.0, -5.0, 6.0);
+TEST(IVec3dDotTest, NegativeValues) {
+    IVec3d a(-1.0, -2.0, -3.0);
+    IVec3d b(4.0, -5.0, 6.0);
     EXPECT_DOUBLE_EQ(dot(a, b), -12.0); // -1*4 + -2*-5 + -3*6 = -12
 }
 
-TEST(IVec3DotTest, MixedValues) {
-    IVec3 a(0.5, -1.5, 2.0);
-    IVec3 b(4.0, -0.5, -1.0);
+TEST(IVec3dDotTest, MixedValues) {
+    IVec3d a(0.5, -1.5, 2.0);
+    IVec3d b(4.0, -0.5, -1.0);
     EXPECT_DOUBLE_EQ(dot(a, b), 0.75); // 0.5*4 + -1.5*-0.5 + 2*-1 = 0.75
 }
 
 
 
 TEST(HitIntrinsics, DotAndLength) {
-    IVec3 a(1.0, 2.0, 3.0);
-    IVec3 b(4.0, 5.0, 6.0);
+    IVec3d a(1.0, 2.0, 3.0);
+    IVec3d b(4.0, 5.0, 6.0);
 
     // dot = 1*4 + 2*5 + 3*6 = 32
     EXPECT_DOUBLE_EQ(dot(a, b), 32.0);
@@ -67,7 +67,7 @@ TEST(HitIntrinsics, PointMinusPointYieldsVector) {
     IPoint3 p1(1.0, 2.0, 3.0);
     IPoint3 p2(4.0, 6.0, 8.0);
 
-    IVec3 v = p1 - p2; // v = p1 - p2 = (-3, -4, -5)
+    IVec3d v = p1 - p2; // v = p1 - p2 = (-3, -4, -5)
 
     EXPECT_DOUBLE_EQ(v.x(), -3.0);
     EXPECT_DOUBLE_EQ(v.y(), -4.0);
@@ -76,7 +76,7 @@ TEST(HitIntrinsics, PointMinusPointYieldsVector) {
 
 TEST(HitIntrinsics, PointPlusVectorTimesScalar) {
     IPoint3 origin(0.0, 0.0, 0.0);
-    IVec3 dir(1.0, 2.0, 3.0);
+    IVec3d dir(1.0, 2.0, 3.0);
     double t = 2.5;
 
     // rec.point = origin + dir * t
@@ -94,7 +94,7 @@ TEST(HitIntrinsics, OutwardNormalIsUnit) {
     double radius = 5.0;
 
     // outward normal = (hitP - position) / radius
-    IVec3 outward = (hitP - position) / radius;
+    IVec3d outward = (hitP - position) / radius;
 
     EXPECT_NEAR(outward.x(), 1.0, 1e-12);
     EXPECT_NEAR(outward.y(), 0.0, 1e-12);
@@ -105,7 +105,7 @@ TEST(HitIntrinsics, OutwardNormalIsUnit) {
 }
 
 TEST(HitIntrinsics, SettersGettersAndMutationAffectsLength) {
-    IVec3 v(1.0, 2.0, 3.0);
+    IVec3d v(1.0, 2.0, 3.0);
 
     // initial checks
     EXPECT_DOUBLE_EQ(v.x(), 1.0);
@@ -132,12 +132,12 @@ TEST(HitIntrinsics, SettersGettersAndMutationAffectsLength) {
 TEST(HitIntrinsics, ZeroDiscriminantCase) {
     // Test dot/length usage in degenerate quadratic: choose oc and dir so discriminant == 0
     // Use oc parallel to dir so half_b^2 == a*c
-    IVec3 dir(1.0, 0.0, 0.0);
+    IVec3d dir(1.0, 0.0, 0.0);
     IPoint3 origin(0.0, 0.0, 0.0);
     IPoint3 center(2.0, 0.0, 0.0);
     double radius = 1.0;
 
-    IVec3 oc = origin - center; // oc = (-2,0,0)
+    IVec3d oc = origin - center; // oc = (-2,0,0)
     double a = dot(dir, dir);                 // = 1
     double half_b = dot(oc, dir);             // = -2
     double c = dot(oc, oc) - radius*radius;   // = 4 - 1 = 3
@@ -146,7 +146,7 @@ TEST(HitIntrinsics, ZeroDiscriminantCase) {
     EXPECT_GT(discriminant, 0.0);
 
     // Now arrange to force discriminant == 0 (example: oc = (-1,0,0), radius=0)
-    IVec3 oc2(-1.0, 0.0, 0.0);
+    IVec3d oc2(-1.0, 0.0, 0.0);
     double half_b2 = dot(oc2, dir); // -1
     double c2 = dot(oc2, oc2) - 1.0; // 1 - 1 = 0
     double disc2 = half_b2*half_b2 - a*c2; // = 1
