@@ -18,7 +18,9 @@ set(LIB_SOURCES
 # Test sources
 # -----------------------------
 set(TEST_SOURCES
-    ${CMAKE_CURRENT_SOURCE_DIR}/IntinsicGeomUnit.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/test_IVec3d.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/test_IVec3f.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/test_GmUtilities.cpp
 )
 
 # -----------------------------

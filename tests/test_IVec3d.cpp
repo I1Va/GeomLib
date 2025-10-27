@@ -5,14 +5,6 @@ using namespace gm;
 
 static constexpr double EPS = 1e-12;
 
-
-int main(int argc, char **argv) {
-    testing::InitGoogleTest(&argc, argv);
-
-    return RUN_ALL_TESTS();
-}
-
-
 TEST(IVec3dDotTest, ZeroVectors) {
     IVec3d a(0.0, 0.0, 0.0);
     IVec3d b(0.0, 0.0, 0.0);
@@ -56,9 +48,6 @@ TEST(HitIntrinsics, DotAndLength) {
     EXPECT_DOUBLE_EQ(dot(a, b), 32.0);
 
     // length2 of 'a' = 1 + 4 + 9 = 14
-    std::cout << a << "\n";
-    std::cout << a.length2() << "\n";
-    std::cout << a.length() << "\n";
     EXPECT_DOUBLE_EQ(a.length2(), 14.0);
     EXPECT_NEAR(a.length(), std::sqrt(14.0), EPS);
 }
@@ -119,6 +108,9 @@ TEST(HitIntrinsics, SettersGettersAndMutationAffectsLength) {
     v.setX(10.0);
     v.setY(-4.0);
     v.setZ(0.5);
+    v.setY(-4.0);
+    v.setX(10.0);
+    v.setZ(0.5);
 
     EXPECT_DOUBLE_EQ(v.x(), 10.0);
     EXPECT_DOUBLE_EQ(v.y(), -4.0);
@@ -152,5 +144,3 @@ TEST(HitIntrinsics, ZeroDiscriminantCase) {
     double disc2 = half_b2*half_b2 - a*c2; // = 1
     EXPECT_GE(disc2, 0.0); // just verify non-negative path (sanity)
 }
-
-

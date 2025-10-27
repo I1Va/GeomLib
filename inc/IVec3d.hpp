@@ -193,9 +193,9 @@ public:
     }
 
     // --------------------------------------- Getters --------------------------------------------
-    double x() const { return mm_256_get_elem(cords_, 0); }
-    double y() const { return mm_256_get_elem(cords_, 1); }    
-    double z() const { return mm_256_get_elem(cords_, 2); }
+    double x() const { return mm_256d_get_elem(cords_, 0); }
+    double y() const { return mm_256d_get_elem(cords_, 1); }    
+    double z() const { return mm_256d_get_elem(cords_, 2); }
     __m256d cords() const { return cords_; }
 
     double length() const { return std::sqrt(length2()); }
@@ -205,7 +205,7 @@ public:
            
             __m256d v2 = _mm256_mul_pd(cords_, cords_);
             __m256d sum = _mm256_hadd_pd(v2, v2);      // [w^2 + z^2, w^2 + z^2, y^2 + x^2, y^2 + x^2]
-            len2Cache_ = mm_256_get_elem(sum, 0) + mm_256_get_elem(sum, 3);
+            len2Cache_ = mm_256d_get_elem(sum, 0) + mm_256d_get_elem(sum, 3);
         
             len2Dirty_ = false;
         }
@@ -228,19 +228,19 @@ public:
     // --------------------------------------- Setters --------------------------------------------
     void setX(const double scalar) noexcept
     {   
-        mm_256_set_elem(cords_, 0, scalar);
+        mm_256d_set_elem(cords_, 0, scalar);
         len2Dirty_ = true;
     }
 
     void setY(const double scalar) noexcept
     {
-        mm_256_set_elem(cords_, 1, scalar);
+        mm_256d_set_elem(cords_, 1, scalar);
         len2Dirty_ = true;
     }
     
     void setZ(const double scalar) noexcept
     {
-        mm_256_set_elem(cords_, 2, scalar);
+        mm_256d_set_elem(cords_, 2, scalar);
         len2Dirty_ = true;
     }
     
@@ -369,9 +369,9 @@ public:
     }
 
     // Setters (modify in-place)
-    void setX(const double scalar) { mm_256_set_elem(cords_, 0, scalar); }
-    void setY(const double scalar) { mm_256_set_elem(cords_, 1, scalar); }
-    void setZ(const double scalar) { mm_256_set_elem(cords_, 2, scalar); }
+    void setX(const double scalar) { mm_256d_set_elem(cords_, 0, scalar); }
+    void setY(const double scalar) { mm_256d_set_elem(cords_, 1, scalar); }
+    void setZ(const double scalar) { mm_256d_set_elem(cords_, 2, scalar); }
 
     // stream operators
     friend std::ostream& operator<<(std::ostream& os, const IPoint3& p) {
@@ -421,12 +421,12 @@ public:
     IVec2& operator/=(double s) noexcept { assert(s != 0.0); __m128d sv = _mm_set1_pd(s); cords_ = _mm_div_pd(cords_, sv); len2Dirty_ = true; return *this; }
 
     // accessors
-    double x() const noexcept { return mm_128_get_elem(cords_, 0); }
-    double y() const noexcept { return mm_128_get_elem(cords_, 1); }
+    double x() const noexcept { return mm_128d_get_elem(cords_, 0); }
+    double y() const noexcept { return mm_128d_get_elem(cords_, 1); }
     __m128d cords() const { return cords_; }
 
-    void setX(double v) noexcept { mm_128_set_elem(cords_, 0, v); len2Dirty_ = true; }
-    void setY(double v) noexcept { mm_128_set_elem(cords_, 1, v); len2Dirty_ = true; }
+    void setX(double v) noexcept { mm_128d_set_elem(cords_, 0, v); len2Dirty_ = true; }
+    void setY(double v) noexcept { mm_128d_set_elem(cords_, 1, v); len2Dirty_ = true; }
 
     // math
     double dot(const IVec2 &o) const noexcept {
@@ -517,11 +517,11 @@ public:
     }
 
     // accessors
-    double x() const noexcept { return mm_128_get_elem(cords_, 0); }
-    double y() const noexcept { return mm_128_get_elem(cords_, 1); }
+    double x() const noexcept { return mm_128d_get_elem(cords_, 0); }
+    double y() const noexcept { return mm_128d_get_elem(cords_, 1); }
 
-    void setX(double v) noexcept { mm_128_set_elem(cords_, 0, v); }
-    void setY(double v) noexcept { mm_128_set_elem(cords_, 1, v); }
+    void setX(double v) noexcept { mm_128d_set_elem(cords_, 0, v); }
+    void setY(double v) noexcept { mm_128d_set_elem(cords_, 1, v); }
 
     // stream
     friend std::ostream& operator<<(std::ostream& os, const IPoint2& p) {
