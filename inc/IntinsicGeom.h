@@ -276,8 +276,20 @@ inline double dot(const IVec3 &a, const IVec3 &b) noexcept {
     GM_ASSERT_VEC3(a);
     GM_ASSERT_VEC3(b);
 
-    __m256d mul = _mm256_mul_pd(a.cords(), b.cords());
-    return mm_256_get_elem(mul, 0) + mm_256_get_elem(mul, 1) + mm_256_get_elem(mul, 2);
+     __m256d mul = _mm256_mul_pd(a.cords(), b.cords());
+
+    // low 128: [e0, e1], high 128: [e2, e3]
+    __m128d lo = _mm256_castpd256_pd128(mul);
+    __m128d hi = _mm256_extractf128_pd(mul, 1);
+
+    // sum e0 + e1 using horizontal add on the low half
+    __m128d sum_lo = _mm_hadd_pd(lo, lo);         // [e0+e1, e0+e1]
+    double e01 = _mm_cvtsd_f64(sum_lo);           // extract scalar e0+e1
+
+    // extract e2 (low element of hi) and add
+    double e2 = _mm_cvtsd_f64(hi);
+
+    return e01 + e2;
 }
 
 inline IVec3 getOrtogonal(const IVec3 a, const IVec3 b) {
