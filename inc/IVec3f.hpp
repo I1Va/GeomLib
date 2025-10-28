@@ -176,9 +176,10 @@ public:
     }
 
     // --------------------------------------- Getters --------------------------------------------
-    float x() const noexcept { return mm_128d_get_elem(cords_, 0); }
-    float y() const noexcept { return mm_128d_get_elem(cords_, 1); }
-    float z() const noexcept { return mm_128d_get_elem(cords_, 2); }
+    float x() const noexcept { return mm_128_get_elem(cords_, 0); }
+    float y() const noexcept { return mm_128_get_elem(cords_, 1); }
+    float z() const noexcept { return mm_128_get_elem(cords_, 2); }
+
     __m128 cords() const noexcept { return cords_; }
 
     float length() const noexcept { return std::sqrtf(length2()); }
@@ -212,19 +213,19 @@ public:
     // --------------------------------------- Setters --------------------------------------------
     void setX(const float scalar) noexcept
     {
-        mm_128d_set_elem(cords_, 0, scalar);
+        mm_128_set_elem(cords_, 0, scalar);
         len2Dirty_ = true;
     }
 
     void setY(const float scalar) noexcept
     {
-        mm_128d_set_elem(cords_, 1, scalar);
+        mm_128_set_elem(cords_, 1, scalar);
         len2Dirty_ = true;
     }
     
     void setZ(const float scalar) noexcept
     {
-        mm_128d_set_elem(cords_, 2, scalar);
+        mm_128_set_elem(cords_, 2, scalar);
         len2Dirty_ = true;
     }
 
@@ -342,9 +343,9 @@ public:
     }
 
     // Setters (modify in-place)
-    void setX(const float scalar) { mm_128d_set_elem(cords_, 0, scalar); }
-    void setY(const float scalar) { mm_128d_set_elem(cords_, 1, scalar); }
-    void setZ(const float scalar) { mm_128d_set_elem(cords_, 2, scalar); }
+    void setX(const float scalar) { mm_128_set_elem(cords_, 0, scalar); }
+    void setY(const float scalar) { mm_128_set_elem(cords_, 1, scalar); }
+    void setZ(const float scalar) { mm_128_set_elem(cords_, 2, scalar); }
 
     // stream operators
     friend std::ostream& operator<<(std::ostream& os, const IPoint3& p) {
@@ -394,12 +395,12 @@ public:
     IVec2f& operator/=(float s) noexcept { assert(s != 0.0f); __m128 sv = _mm_set1_ps(s); cords_ = _mm_div_ps(cords_, sv); len2Dirty_ = true; return *this; }
 
     // accessors
-    float x() const noexcept { return mm_128d_get_elem(cords_, 0); }
-    float y() const noexcept { return mm_128d_get_elem(cords_, 1); }
+    float x() const noexcept { return mm_128_get_elem(cords_, 0); }
+    float y() const noexcept { return mm_128_get_elem(cords_, 1); }
     __m128 cords() const noexcept { return cords_; }
 
-    void setX(float v) noexcept { mm_128d_set_elem(cords_, 0, v); len2Dirty_ = true; }
-    void setY(float v) noexcept { mm_128d_set_elem(cords_, 1, v); len2Dirty_ = true; }
+    void setX(float v) noexcept { mm_128_set_elem(cords_, 0, v); len2Dirty_ = true; }
+    void setY(float v) noexcept { mm_128_set_elem(cords_, 1, v); len2Dirty_ = true; }
 
     // math
     float dot(const IVec2f &o) const noexcept {
@@ -490,11 +491,11 @@ public:
     }
 
     // accessors
-    float x() const noexcept { return mm_128d_get_elem(cords_, 0); }
-    float y() const noexcept { return mm_128d_get_elem(cords_, 1); }
+    float x() const noexcept { return mm_128_get_elem(cords_, 0); }
+    float y() const noexcept { return mm_128_get_elem(cords_, 1); }
 
-    void setX(float v) noexcept { mm_128d_set_elem(cords_, 0, v); }
-    void setY(float v) noexcept { mm_128d_set_elem(cords_, 1, v); }
+    void setX(float v) noexcept { mm_128_set_elem(cords_, 0, v); }
+    void setY(float v) noexcept { mm_128_set_elem(cords_, 1, v); }
 
     // stream
     friend std::ostream& operator<<(std::ostream& os, const IPoint2f& p) {
