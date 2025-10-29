@@ -12,7 +12,7 @@ add_library(GeomLib STATIC
     ${CMAKE_CURRENT_SOURCE_DIR}/src/GmUtilities.cpp
 )
 
-option(GEOMLIB_BUILD_TESTS "Build GeomLib unit tests" ON)
+option(GEOMLIB_BUILD_TESTS "Build GeomLib unit tests" OFF)
 if(GEOMLIB_BUILD_TESTS)
     add_subdirectory(tests)
 endif()
