@@ -1,55 +1,31 @@
-cmake_minimum_required(VERSION 3.10)
-project(GeomLibTests LANGUAGES CXX)
+enable_testing()
 
-set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
+find_package(GTest REQUIRED)
+include(GoogleTest)
 
-# -----------------------------
-# Library source files
-# -----------------------------
 set(LIB_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/../src/Geom.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/../src/IVec3d.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/../src/IVec3f.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/../src/GmUtilities.cpp
 )
-
-# -----------------------------
-# Test sources
-# -----------------------------
 set(TEST_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/test_IVec3d.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/test_IVec3f.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/test_GmUtilities.cpp
 )
 
-# -----------------------------
-# Create test executable
-# -----------------------------
-add_executable(${PROJECT_NAME} ${TEST_SOURCES} ${LIB_SOURCES})
+add_executable(GeomLibUnitTests ${TEST_SOURCES} ${LIB_SOURCES})
 
-# Include directories for library headers
-target_include_directories(${PROJECT_NAME} PRIVATE
+target_include_directories(GeomLibUnitTests PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/../inc
     ${CMAKE_CURRENT_SOURCE_DIR}/inc
 )
 
-# Compile flags
-target_compile_options(${PROJECT_NAME} PRIVATE -march=native -mtune=native)
+target_compile_options(GeomLibUnitTests PRIVATE -march=native -mtune=native)
+target_link_libraries(GeomLibUnitTests PRIVATE gtest gtest_main)
 
-# -----------------------------
-# Google Test
-# -----------------------------
-find_package(GTest REQUIRED)
-target_link_libraries(${PROJECT_NAME} PRIVATE gtest gtest_main)
+target_compile_options(GeomLibUnitTests PRIVATE -fsanitize=address -fno-omit-frame-pointer)
+target_link_options(GeomLibUnitTests PRIVATE -fsanitize=address)
 
-# Address sanitizer (optional)
-target_compile_options(${PROJECT_NAME} PRIVATE -fsanitize=address -fno-omit-frame-pointer)
-target_link_options(${PROJECT_NAME} PRIVATE -fsanitize=address)
-
-# -----------------------------
-# Enable testing
-# -----------------------------
-enable_testing()
-include(GoogleTest)
-gtest_discover_tests(${PROJECT_NAME})
+gtest_discover_tests(GeomLibUnitTests)
