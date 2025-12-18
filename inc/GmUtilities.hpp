@@ -4,9 +4,41 @@
 #include <random>
 #include <cstdio>
 #include <immintrin.h>
+#include <omp.h>
 
 namespace gm
 {
+
+class GlobalMPRandomGenerator {
+    std::vector<std::mt19937> generators;
+    std::vector<size_t> threadGeneratorId;
+public:
+    GlobalMPRandomGenerator() {
+        // one thread default case
+        generators.resize(1);
+        threadGeneratorId.resize(1);
+        threadGeneratorId[0] = 0;
+    }
+
+    void resetRandomGenerator(const size_t generatorsNum, const size_t theadsNum) {
+        generators.resize(generatorsNum);
+        threadGeneratorId.resize(theadsNum);
+        for (size_t i = 0; i < generators.size(); i++) {
+            generators[i].seed(i);
+        }
+    }
+
+    void setThreadGeneratorId(const size_t tid, const size_t generatorId) {
+        threadGeneratorId[tid] = generatorId;
+    }
+
+    std::mt19937 &getThreadGenerator(const size_t tid) {
+        return generators[threadGeneratorId[tid]];
+    }
+};
+
+void resetRandomGenerator(const size_t generatorsNum, const size_t theadsNum);
+void setThreadGeneratorId(const size_t generatorId);
 
 double randomDouble();
 float randomFloat();
@@ -35,8 +67,4 @@ inline double randomDouble(double min, double max) {
 inline double randomFloat(double min, double max) {
     return min + (max-min)*randomFloat();
 }
-
-void resetGenerators();
-
-void setThreadPixelId(int tid, int pixelId);
 }

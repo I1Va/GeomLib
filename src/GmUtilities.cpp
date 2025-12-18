@@ -7,27 +7,24 @@
 namespace gm
 {
 
-std::vector<std::mt19937> generators(100000);
-std::vector<int> threadPixelId(8);
+GlobalMPRandomGenerator globalGenerator;
 
-void setThreadPixelId(int tid, int pixelId) {
-    threadPixelId[tid] = pixelId;
+void resetRandomGenerator(const size_t generatorsNum, const size_t theadsNum) {
+    globalGenerator.resetRandomGenerator(generatorsNum, theadsNum);
 }
 
-void resetGenerators() {
-    for (size_t i = 0; i < generators.size(); i++) {
-        generators[i].seed(i);
-    }
+void setThreadGeneratorId(const size_t generatorId) {
+    globalGenerator.setThreadGeneratorId(omp_get_thread_num(), generatorId);
 }
 
 double randomDouble() {
     thread_local std::uniform_real_distribution<double> distribution(0.0, 1.0);
-    return distribution(generators[threadPixelId[omp_get_thread_num()]]);
+    return distribution(globalGenerator.getThreadGenerator(omp_get_thread_num()));
 }
 
 float randomFloat() {
     thread_local std::uniform_real_distribution<float> distribution(0.0, 1.0);
-    return distribution(generators[threadPixelId[omp_get_thread_num()]]);
+    return distribution(globalGenerator.getThreadGenerator(omp_get_thread_num()));
 }
 
 void mm_256d_set_elem(__m256d &v, std::size_t n, double value) {
