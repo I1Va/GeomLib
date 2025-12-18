@@ -10,35 +10,24 @@ namespace gm
 {
 
 class GlobalMPRandomGenerator {
-    std::vector<std::mt19937> generators;
-    std::vector<size_t> threadGeneratorId;
+    std::vector<std::minstd_rand> threadsGenerators;
 public:
-    GlobalMPRandomGenerator() {
-        // one thread default case
-        generators.resize(1);
-        threadGeneratorId.resize(1);
-        threadGeneratorId[0] = 0;
-    }
+    // one thread default case
+    GlobalMPRandomGenerator() : threadsGenerators(0) {}
 
-    void resetRandomGenerator(const size_t generatorsNum, const size_t theadsNum) {
-        generators.resize(generatorsNum);
-        threadGeneratorId.resize(theadsNum);
-        for (size_t i = 0; i < generators.size(); i++) {
-            generators[i].seed(i);
-        }
+    void setThreadsNum(const size_t threadsNum) {
+        threadsGenerators.resize(threadsNum);
     }
-
-    void setThreadGeneratorId(const size_t tid, const size_t generatorId) {
-        threadGeneratorId[tid] = generatorId;
+    void setThreadSeed(const size_t tid, const int seed) {
+        threadsGenerators[tid].seed(seed);
     }
-
-    std::mt19937 &getThreadGenerator(const size_t tid) {
-        return generators[threadGeneratorId[tid]];
+    std::minstd_rand &getThreadGenerator(const size_t tid) {
+        return threadsGenerators[tid];
     }
 };
 
-void resetRandomGenerator(const size_t generatorsNum, const size_t theadsNum);
-void setThreadGeneratorId(const size_t generatorId);
+void setThreadsNum(const size_t threadsNum);
+void setThreadSeed(const int seed);
 
 double randomDouble();
 float randomFloat();

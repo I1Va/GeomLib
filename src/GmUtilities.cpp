@@ -9,12 +9,12 @@ namespace gm
 
 GlobalMPRandomGenerator globalGenerator;
 
-void resetRandomGenerator(const size_t generatorsNum, const size_t theadsNum) {
-    globalGenerator.resetRandomGenerator(generatorsNum, theadsNum);
+void setThreadSeed(const int seed) {
+    globalGenerator.setThreadSeed(omp_get_thread_num(), seed);
 }
 
-void setThreadGeneratorId(const size_t generatorId) {
-    globalGenerator.setThreadGeneratorId(omp_get_thread_num(), generatorId);
+void setThreadsNum(const size_t threadsNum) {
+    globalGenerator.setThreadsNum(threadsNum);
 }
 
 double randomDouble() {
