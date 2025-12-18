@@ -1,22 +1,33 @@
 #include <random>
 #include <cassert>
 #include <iostream>
+#include <omp.h>
 #include "GmUtilities.hpp"
-
 
 namespace gm
 {
 
+std::vector<std::mt19937> generators(100000);
+std::vector<int> threadPixelId(8);
+
+void setThreadPixelId(int tid, int pixelId) {
+    threadPixelId[tid] = pixelId;
+}
+
+void resetGenerators() {
+    for (size_t i = 0; i < generators.size(); i++) {
+        generators[i].seed(i);
+    }
+}
+
 double randomDouble() {
     thread_local std::uniform_real_distribution<double> distribution(0.0, 1.0);
-    thread_local std::mt19937 generator;
-    return distribution(generator);
+    return distribution(generators[threadPixelId[omp_get_thread_num()]]);
 }
 
 float randomFloat() {
     thread_local std::uniform_real_distribution<float> distribution(0.0, 1.0);
-    thread_local std::mt19937 generator;
-    return distribution(generator);
+    return distribution(generators[threadPixelId[omp_get_thread_num()]]);
 }
 
 void mm_256d_set_elem(__m256d &v, std::size_t n, double value) {

@@ -36,4 +36,7 @@ inline double randomFloat(double min, double max) {
     return min + (max-min)*randomFloat();
 }
 
+void resetGenerators();
+
+void setThreadPixelId(int tid, int pixelId);
 }
