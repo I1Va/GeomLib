@@ -13,7 +13,7 @@ class GlobalMPRandomGenerator {
     std::vector<std::minstd_rand> threadsGenerators;
 public:
     // one thread default case
-    GlobalMPRandomGenerator() : threadsGenerators(0) {}
+    GlobalMPRandomGenerator() : threadsGenerators(1) {}
 
     void setThreadsNum(const size_t threadsNum) {
         threadsGenerators.resize(threadsNum);
